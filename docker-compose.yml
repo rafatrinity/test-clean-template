@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clean-arch-app
+    env_file:
+      - .env
+    ports:
+      - "${HTTP_PORT}:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    networks:
+      - default
+
+  db:
+    image: postgres:15.2
+    container_name: clean-arch-db
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./.docker/volumes/db_data:/var/lib/postgresql/data
+    networks:
+      - default
+
+  redis:
+    image: redis:7.0.10
+    container_name: clean-arch-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker/volumes/redis_data:/data
+    networks:
+      - default
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: clean-arch-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
+    volumes:
+      - ./.docker/volumes/jaeger_data:/var/lib/jaeger
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
